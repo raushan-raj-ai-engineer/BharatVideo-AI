@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BharatVideoProjectV03",
+  "type": "object",
+  "required": ["title", "prompt", "platform", "language", "duration_seconds"],
+  "properties": {
+    "title": {"type": "string", "minLength": 2},
+    "prompt": {"type": "string", "minLength": 5},
+    "platform": {"type": "string"},
+    "language": {"type": "string"},
+    "dialect": {"type": "string"},
+    "style": {"type": "string"},
+    "duration_seconds": {"type": "integer", "minimum": 5, "maximum": 600},
+    "quality": {"type": "string", "enum": ["economy", "balanced", "premium"]},
+    "media_asset_contract": {
+      "type": "object",
+      "properties": {
+        "kind": {"type": "string", "enum": ["image", "voice", "subtitle", "scene_video", "final_video"]},
+        "provider": {"type": "string"},
+        "status": {"type": "string", "enum": ["QUEUED", "GENERATING", "READY", "FAILED"]},
+        "cost_credits": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

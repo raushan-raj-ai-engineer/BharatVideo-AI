@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: bharatvideo
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports: ["5432:5432"]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  api:
+    build: ./apps/api
+    env_file: .env
+    ports: ["8000:8000"]
+    depends_on: [postgres, redis]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./apps/api:/app
+      - local_storage:/data/storage
+      - ${HOST_AGENTIC_CONTENT_FACTORY_ROOT:-./agentic-content-factory}:/workspace/agentic-content-factory:ro
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    build: ./apps/api
+    env_file: .env
+    depends_on: [postgres, redis]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./apps/api:/app
+      - local_storage:/data/storage
+      - ${HOST_AGENTIC_CONTENT_FACTORY_ROOT:-./agentic-content-factory}:/workspace/agentic-content-factory:ro
+    command: celery -A app.tasks.celery_app.celery worker --loglevel=INFO
+
+  web:
+    build: ./apps/web
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    ports: ["3000:3000"]
+    depends_on: [api]
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+      - /app/.next
+
+volumes:
+  postgres_data:
+  local_storage:
